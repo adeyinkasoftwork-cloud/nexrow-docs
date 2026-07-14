@@ -9,6 +9,10 @@
 --------------------------------------------------------------------------- */
 
 :root {
+  /* System font stacks: no webfont is fetched at build or at runtime. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
   --surface: 255 255 255;
   --surface-raised: 250 250 251;
   --surface-sunken: 244 244 246;
