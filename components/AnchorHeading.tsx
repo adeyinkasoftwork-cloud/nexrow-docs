@@ -34,8 +34,8 @@ export default function AnchorHeading({ id, level, children }: Props) {
         // repeated here. Setting both would double the offset.
         className={
           level === 2
-            ? "text-[27px] font-semibold leading-tight sm:text-[30px]"
-            : "text-[17px] font-semibold leading-snug"
+            ? "text-[30px] font-semibold leading-[1.12] sm:text-[34px]"
+            : "text-[19px] font-semibold leading-snug"
         }
       >
         {children}

@@ -8,27 +8,6 @@ export default function Footer() {
           <span className="font-medium text-ink-muted">{site.name}:</span>{" "}
           {site.thesisLine}
         </p>
-        <a
-          href={site.sumiroUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-accent transition-colors hover:text-accent-2"
-        >
-          sumiro.studio
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M7 17 17 7M7 7h10v10" />
-          </svg>
-        </a>
       </div>
     </footer>
   );

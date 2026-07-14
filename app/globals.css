@@ -6,6 +6,12 @@
    Nexrow design tokens.
    Both themes share structure: only the values below change.
    Colors are stored as "R G B" triplets so Tailwind can apply opacity.
+
+   Surfaces are tiered, not uniform. Three levels exist and each block picks one
+   deliberately:
+     .nx-quiet     recedes: sunken, no shadow, hairline only
+     .nx-raised    the default card: lit top edge, ambient shadow
+     .nx-featured  earns attention: gradient-tinted border, bloom, deeper shadow
 --------------------------------------------------------------------------- */
 
 :root {
@@ -14,13 +20,13 @@
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
   --surface: 255 255 255;
-  --surface-raised: 250 250 251;
-  --surface-sunken: 244 244 246;
-  --line: 228 228 233;
-  --line-strong: 212 212 219;
-  --ink: 24 24 28;
-  --ink-muted: 82 82 93;
-  --ink-subtle: 124 124 138;
+  --surface-raised: 252 252 253;
+  --surface-sunken: 245 245 248;
+  --line: 227 227 234;
+  --line-strong: 205 205 216;
+  --ink: 18 18 23;
+  --ink-muted: 84 84 96;
+  --ink-subtle: 118 118 132;
 
   /* Accent solids picked from the gradient. #764CFF hits 4.9:1 on white. */
   --accent: 118 76 255;
@@ -30,28 +36,70 @@
   --glow-blue: 76 201 255;
 
   --hero-glow-opacity: 0.16;
-  --code-bg: 245 245 248;
+  --code-bg: 246 246 249;
+
+  /* Depth. The top edge is a light source; the shadow is ambient occlusion,
+     not a drop shadow, so it is wide, soft and barely tinted. */
+  --edge-top: 255 255 255 / 0.9;
+  --shadow-ambient:
+    0 1px 1px rgb(16 18 40 / 0.03),
+    0 4px 10px -5px rgb(16 18 40 / 0.06),
+    0 16px 36px -18px rgb(16 18 40 / 0.12);
+  --shadow-lift:
+    0 1px 1px rgb(16 18 40 / 0.04),
+    0 8px 18px -8px rgb(16 18 40 / 0.09),
+    0 26px 50px -22px rgb(16 18 40 / 0.18);
+  --shadow-featured:
+    0 1px 1px rgb(16 18 40 / 0.04),
+    0 10px 24px -10px rgb(68 32 167 / 0.12),
+    0 32px 64px -28px rgb(68 32 167 / 0.22);
+  --shadow-inset: inset 0 1px 3px rgb(16 18 40 / 0.05);
+
+  /* Bloom behind featured surfaces. */
+  --bloom: 0.1;
+  --grain-opacity: 0.035;
 }
 
 .dark {
-  --surface: 10 10 13;
-  --surface-raised: 20 20 25;
-  --surface-sunken: 27 27 33;
-  --line: 39 39 47;
-  --line-strong: 58 58 68;
-  --ink: 240 240 243;
-  --ink-muted: 168 168 180;
-  --ink-subtle: 128 128 142;
+  /* Deep, not gray. A blue-violet cast in the near-black is what separates a
+     dimensional dark theme from a flat one. */
+  --surface: 9 10 15;
+  --surface-raised: 19 20 28;
+  --surface-sunken: 26 27 37;
+  --line: 40 42 54;
+  --line-strong: 62 64 80;
+  --ink: 240 241 246;
+  --ink-muted: 170 172 186;
+  --ink-subtle: 132 134 150;
 
-  /* Raised for contrast on near-black. #9A6EFF hits 5.6:1 on #0A0A0D. */
+  /* Raised for contrast on near-black. #9A6EFF hits 5.2:1 on #13141C. */
   --accent: 154 110 255;
   --accent-2: 39 183 255;
 
   --glow-purple: 196 135 255;
   --glow-blue: 76 201 255;
 
-  --hero-glow-opacity: 0.22;
-  --code-bg: 22 22 28;
+  --hero-glow-opacity: 0.24;
+  --code-bg: 14 15 22;
+
+  /* In the dark the top edge is the only thing that says "this is a surface". */
+  --edge-top: 255 255 255 / 0.07;
+  --shadow-ambient:
+    0 1px 2px rgb(0 0 0 / 0.35),
+    0 8px 20px -10px rgb(0 0 0 / 0.5),
+    0 24px 48px -24px rgb(0 0 0 / 0.6);
+  --shadow-lift:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 14px 28px -12px rgb(0 0 0 / 0.55),
+    0 36px 64px -28px rgb(0 0 0 / 0.7);
+  --shadow-featured:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 14px 32px -12px rgb(0 0 0 / 0.55),
+    0 40px 80px -32px rgb(88 44 200 / 0.35);
+  --shadow-inset: inset 0 1px 4px rgb(0 0 0 / 0.4);
+
+  --bloom: 0.16;
+  --grain-opacity: 0.05;
 }
 
 @layer base {
@@ -70,6 +118,7 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }
@@ -77,6 +126,20 @@
   body {
     @apply bg-surface text-ink font-sans antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Film grain. A fixed, inert overlay at very low opacity: it kills the
+     perfectly flat digital fill without ever reading as texture. The noise is
+     an inline SVG data URI, so nothing is fetched. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   ::selection {
@@ -94,17 +157,41 @@
   h3,
   h4 {
     @apply text-ink;
-    letter-spacing: -0.021em;
     text-wrap: balance;
+  }
+
+  h1 {
+    letter-spacing: -0.033em;
+  }
+
+  h2 {
+    letter-spacing: -0.028em;
+  }
+
+  h3 {
+    letter-spacing: -0.016em;
   }
 
   p {
     text-wrap: pretty;
   }
+
+  /* Every numeral on this site is tabular. Numbers that jitter are the fastest
+     way to look unconsidered. */
+  .font-mono,
+  .nx-index,
+  th,
+  td {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer components {
-  /* The single expressive brand asset. */
+  /* ── Brand gradient ─────────────────────────────────────────────────────
+     Reserved. It appears only at: the hero (glow, headline, CTA), the
+     wordmark, the active section rail, the key-insight rail, and the one
+     highlighted column of the competitive matrix. Nowhere else. */
+
   .nx-gradient {
     background: linear-gradient(
       135deg,
@@ -149,19 +236,176 @@
     );
   }
 
-  /* Hairline gradient rule used under section headings. */
-  .nx-gradient-rule {
-    height: 2px;
+  /* Vertical cut of the gradient, for the rail. */
+  .nx-gradient-y {
     background: linear-gradient(
-      90deg,
-      #764cff 0%,
-      #4e3bff 30%,
-      #178cff 65%,
+      180deg,
+      #b76bff 0%,
+      #764cff 28%,
+      #4e3bff 52%,
+      #178cff 80%,
       #48d2ff 100%
     );
   }
 
-  /* Premium glossy CTA: gradient fill plus a white gloss highlight. */
+  /* ── Surface tiers ──────────────────────────────────────────────────────
+     Three levels of presence. Picking one is a design decision made per block,
+     which is the whole point: not everything is a card. */
+
+  /* Recedes. Sunken, hairline, no elevation. */
+  .nx-quiet {
+    @apply rounded-xl border border-line;
+    background: rgb(var(--surface-sunken) / 0.55);
+  }
+
+  /* The default card. Lit on its top edge, floating on ambient occlusion. */
+  .nx-raised {
+    @apply rounded-xl border border-line bg-surface-raised;
+    box-shadow:
+      inset 0 1px 0 0 rgb(var(--edge-top)),
+      var(--shadow-ambient);
+  }
+
+  /* Earns attention. Gradient-tinted hairline, deeper shadow, an ambient bloom
+     underneath rather than a drop shadow behind. */
+  .nx-featured {
+    @apply relative rounded-2xl bg-surface-raised;
+    box-shadow:
+      inset 0 1px 0 0 rgb(var(--edge-top)),
+      var(--shadow-featured);
+  }
+
+  /* The gradient hairline: a 1px inlay that fades out as it travels, so the
+     brand tints the border rather than outlining the box in it. */
+  .nx-featured::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      140deg,
+      rgb(var(--accent) / 0.55) 0%,
+      rgb(var(--accent-2) / 0.3) 38%,
+      rgb(var(--line)) 72%,
+      rgb(var(--line)) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Recessed, not raised: code is carved into the page. */
+  .nx-well {
+    @apply rounded-xl border border-line;
+    background: rgb(var(--code-bg));
+    box-shadow: var(--shadow-inset);
+  }
+
+  /* ── Elevation on hover ─────────────────────────────────────────────────
+     A lift plus a warming border. Fast (180ms) so it feels like hardware. */
+  .nx-lift {
+    transition:
+      transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 180ms ease;
+  }
+
+  .nx-lift:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--line-strong));
+    box-shadow:
+      inset 0 1px 0 0 rgb(var(--edge-top)),
+      var(--shadow-lift);
+  }
+
+  .nx-featured.nx-lift:hover {
+    box-shadow:
+      inset 0 1px 0 0 rgb(var(--edge-top)),
+      var(--shadow-lift),
+      0 0 40px -10px rgb(var(--accent) / 0.28);
+  }
+
+  /* ── The signature: the illuminated index rail ──────────────────────────
+     A hairline spine runs the full height of the document in the left gutter.
+     The segment owned by the current section ignites, and a diamond node marks
+     its head. The same vocabulary reappears as the sidebar thumb, the TOC
+     thumb, the stepper connector and the key-insight edge. */
+
+  .nx-rail-glow {
+    background: rgb(var(--accent));
+    filter: blur(7px);
+  }
+
+  /* The motif: the aperture.
+     The logo is a vortex of arcs converging on a hollow eye. That eye is the
+     shape this site repeats: a ring with a void at its centre, which fills and
+     ignites when the thing it marks becomes current. It is the rail's node, and
+     at 5px it is the tick on every key result and roadmap item. */
+  .nx-aperture {
+    display: inline-block;
+    flex: none;
+    border-radius: 9999px;
+    border: 1px solid currentColor;
+    background: transparent;
+  }
+
+  .nx-node {
+    width: 9px;
+    height: 9px;
+    border-radius: 9999px;
+    background: rgb(var(--surface));
+    border: 1.5px solid rgb(var(--line-strong));
+    transition:
+      background-color 400ms ease,
+      border-color 400ms ease,
+      box-shadow 400ms ease;
+  }
+
+  /* Lit: the ring becomes brand, and the void fills with an accent core and
+     blooms. The aperture opens. */
+  .nx-node.is-on {
+    background: rgb(var(--surface));
+    border-color: rgb(var(--accent));
+    box-shadow:
+      inset 0 0 0 2px rgb(var(--accent)),
+      0 0 12px 0 rgb(var(--accent) / 0.75);
+  }
+
+  /* Section index numeral. Mono, tabular, tracked out, sitting on the rail. */
+  .nx-index {
+    @apply font-mono text-[11px] font-semibold text-ink-subtle;
+    letter-spacing: 0.1em;
+    transition: color 400ms ease;
+  }
+
+  .nx-index.is-on {
+    color: rgb(var(--accent));
+  }
+
+  /* ── Ambient bloom ──────────────────────────────────────────────────────
+     A brand-tinted radial that sits behind a surface. Depth, not decoration. */
+  .nx-bloom {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 9999px;
+    filter: blur(56px);
+    opacity: var(--bloom);
+    background: radial-gradient(
+      circle,
+      rgb(var(--glow-purple)) 0%,
+      rgb(var(--accent)) 45%,
+      rgb(var(--glow-blue)) 100%
+    );
+  }
+
+  /* ── Premium glossy CTA: gradient fill plus a white gloss highlight. ───── */
   .nx-cta {
     position: relative;
     overflow: hidden;
@@ -169,6 +413,9 @@
     box-shadow:
       0 1px 2px rgb(18 54 169 / 0.25),
       0 8px 24px -8px rgb(68 32 167 / 0.45);
+    transition:
+      transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .nx-cta::after {
@@ -184,13 +431,11 @@
   }
 
   .nx-cta:hover {
+    transform: translateY(-2px);
     box-shadow:
       0 1px 2px rgb(18 54 169 / 0.3),
-      0 12px 32px -8px rgb(68 32 167 / 0.6);
-  }
-
-  .nx-card {
-    @apply rounded-xl border border-line bg-surface-raised;
+      0 14px 34px -8px rgb(68 32 167 / 0.6),
+      0 0 44px -12px rgb(var(--accent) / 0.5);
   }
 
   /* Scrollbar for the horizontally scrollable comparison table. */
@@ -206,5 +451,67 @@
   .nx-scroll-x::-webkit-scrollbar-thumb {
     background: rgb(var(--line-strong));
     border-radius: 999px;
+  }
+
+  /* Edge shadow on the pinned first column, so sideways scroll is legible. */
+  .nx-pinned {
+    box-shadow: 10px 0 16px -12px rgb(16 18 40 / 0.35);
+  }
+
+  .dark .nx-pinned {
+    box-shadow: 10px 0 16px -10px rgb(0 0 0 / 0.7);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Motion. Punctuation, never saturation: only section heads, block groups and
+   the two travelling indicators move. Everything is fast and eased out.
+
+   The reveal's hidden state is gated on `html.js`, which the pre-paint script
+   in layout.tsx sets. With JS off, content is simply visible: nothing is ever
+   trapped at opacity 0.
+--------------------------------------------------------------------------- */
+
+html.js .nx-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+html.js .nx-reveal.is-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .nx-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* The hero glow breathes: a 12s cycle, a few percent of scale and opacity.
+   Below the threshold of notice, above the threshold of feeling static. */
+@keyframes nx-breathe {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: var(--hero-glow-opacity);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.09);
+    opacity: calc(var(--hero-glow-opacity) + 0.05);
+  }
+}
+
+.nx-breathe {
+  animation: nx-breathe 12s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-breathe {
+    animation: none;
   }
 }

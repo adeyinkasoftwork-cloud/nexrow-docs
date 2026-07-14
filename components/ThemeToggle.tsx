@@ -38,12 +38,13 @@ export default function ThemeToggle() {
         theme === null ? "Toggle theme" : isDark ? "Switch to light mode" : "Switch to dark mode"
       }
       title={isDark ? "Light mode" : "Dark mode"}
-      className="group relative inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-line bg-surface-raised text-ink-muted transition-colors hover:text-ink"
+      className="nx-lift group relative inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-line bg-surface-raised text-ink-muted shadow-ambient hover:text-accent"
     >
-      {/* Gradient washes in behind the icon on hover, at low opacity. */}
+      {/* Was a wash of the full brand gradient, which is a lot of brand to spend
+          on a 36px button. Now the accent blooms up from underneath instead. */}
       <span
         aria-hidden="true"
-        className="nx-gradient pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-[0.14]"
+        className="pointer-events-none absolute inset-x-0 -bottom-4 h-8 rounded-full bg-accent opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-30"
       />
       <span className="relative">{isDark ? <SunIcon /> : <MoonIcon />}</span>
     </button>

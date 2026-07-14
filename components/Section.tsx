@@ -2,43 +2,62 @@ import type { Section as SectionType } from "@/content/content";
 import { subHeadingId } from "@/lib/toc";
 import AnchorHeading from "@/components/AnchorHeading";
 import { BlockBody } from "@/components/blocks";
+import SectionRail from "@/components/SectionRail";
+import SectionIndex from "@/components/SectionIndex";
+import Reveal from "@/components/Reveal";
 
 export default function Section({
   section,
   index,
+  startsGroup,
 }: {
   section: SectionType;
   index: number;
+  startsGroup: boolean;
 }) {
+  /**
+   * Rhythm, not metronome. A section that opens a new group (Thesis -> Product)
+   * takes a long breath; one that continues a group sits closer to its sibling.
+   * The page then has chapters you can feel without reading a word.
+   */
+  const topPad =
+    index === 0
+      ? "pt-8 sm:pt-10"
+      : startsGroup
+        ? "pt-24 sm:pt-32"
+        : "pt-12 sm:pt-16";
+
   return (
     <section
       aria-labelledby={section.id}
-      className="border-b border-line py-12 first:pt-8 last:border-0 sm:py-14"
+      className={`relative border-b border-line pb-12 last:border-0 sm:pb-16 ${topPad}`}
     >
-      <p className="mb-2 flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.09em] text-ink-subtle">
-        <span className="nx-gradient-text font-bold">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-        <span aria-hidden="true" className="h-3 w-px bg-line" />
-        {section.group}
-      </p>
+      <SectionRail sectionId={section.id} />
 
-      <AnchorHeading id={section.id} level={2}>
-        {section.title}
-      </AnchorHeading>
+      <Reveal>
+        <p className="mb-3 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+          <SectionIndex sectionId={section.id} index={index} />
+          <span aria-hidden="true" className="h-px w-5 bg-line-strong" />
+          {section.group}
+        </p>
 
-      {/* Gradient accent under the section heading. */}
-      <div aria-hidden="true" className="nx-gradient-rule mt-3 w-12 rounded-full" />
+        <AnchorHeading id={section.id} level={2}>
+          {section.title}
+        </AnchorHeading>
 
-      <p className="mt-3 text-[15px] leading-relaxed text-ink-subtle">
-        {section.summary}
-      </p>
+        <p className="mt-4 max-w-[62ch] text-[16px] leading-[1.65] text-ink-muted">
+          {section.summary}
+        </p>
+      </Reveal>
 
-      <div className="mt-6">
+      <Reveal className="mt-9">
         {section.blocks.map((block, i) => (
           <div key={`${section.id}-block-${i}`}>
             {block.heading && (
-              <div className="mt-9 first:mt-0">
+              // Sub-headings within a section get a deliberately large breath
+              // above them, so they group their own blocks rather than floating
+              // in an evenly spaced stream.
+              <div className="mt-14 first:mt-0">
                 <AnchorHeading
                   id={subHeadingId(section.id, block.heading)}
                   level={3}
@@ -50,7 +69,7 @@ export default function Section({
             <BlockBody block={block} />
           </div>
         ))}
-      </div>
+      </Reveal>
     </section>
   );
 }

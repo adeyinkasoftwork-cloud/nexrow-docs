@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { site } from "@/content/content";
 import { useDrawer } from "@/components/Providers";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -8,7 +9,11 @@ export default function Header() {
   const { open, setOpen } = useDrawer();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-surface/80 backdrop-blur-md supports-[backdrop-filter]:bg-surface/70">
+    /* Proper glass. A heavier blur plus a saturation boost, so the brand colour
+       scrolling underneath stays alive through the bar instead of washing out to
+       fog, and a hairline that fades toward both edges rather than ruling flat
+       across the viewport. */
+    <header className="sticky top-0 z-40 bg-surface/70 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-surface/55">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-6">
         <button
           type="button"
@@ -16,14 +21,14 @@ export default function Header() {
           aria-label={open ? "Close navigation" : "Open navigation"}
           aria-expanded={open}
           aria-controls="sidebar-nav"
-          className="-ml-1 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface-raised text-ink-muted transition-colors hover:text-ink lg:hidden"
+          className="nx-lift -ml-1 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface-raised text-ink-muted shadow-ambient hover:text-ink lg:hidden"
         >
           {open ? <CloseIcon /> : <MenuIcon />}
         </button>
 
-        <a href="#overview" className="flex items-center gap-2.5">
+        <a href="#overview" className="group flex items-center gap-2.5">
           <Mark />
-          <span className="nx-gradient-text text-[17px] font-semibold tracking-tight">
+          <span className="nx-gradient-text text-[17px] font-semibold tracking-[-0.022em]">
             {site.name}
           </span>
           <span className="hidden text-[13px] text-ink-subtle sm:inline">
@@ -32,40 +37,50 @@ export default function Header() {
         </a>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <span className="hidden items-center gap-1.5 rounded-full border border-line bg-surface-raised px-3 py-1.5 text-[12px] font-medium text-ink-muted md:inline-flex">
+          {/* The dot was a 6px scrap of the brand gradient. At that size a
+              gradient is indistinguishable from a muddy solid, so it is now an
+              aperture: the site's motif, in the solid accent, with a halo. */}
+          <span className="hidden items-center gap-2 rounded-full border border-line bg-surface-raised/70 py-1.5 pl-2.5 pr-3.5 text-[12px] font-medium text-ink-muted backdrop-blur-md md:inline-flex">
             <span
               aria-hidden="true"
-              className="nx-gradient h-1.5 w-1.5 rounded-full"
-            />
+              className="flex h-4 w-4 items-center justify-center rounded-full bg-accent/12"
+            >
+              <span className="nx-aperture h-[6px] w-[6px] text-accent" />
+            </span>
             {site.bountyTag}
           </span>
           <ThemeToggle />
         </div>
       </div>
+
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-line-strong/80 to-transparent"
+      />
     </header>
   );
 }
 
-/** The wordmark glyph: a gradient-filled link/chain suggestion. */
+/**
+ * The Nexrow mark. Rendered at 2x so it stays crisp on retina displays, and lit
+ * from behind with its own colour so it sits in the page rather than on it.
+ */
 function Mark() {
   return (
-    <span
-      aria-hidden="true"
-      className="nx-gradient flex h-7 w-7 items-center justify-center rounded-[9px] text-white shadow-sm"
-    >
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-      </svg>
+    <span className="relative flex h-7 w-7 shrink-0 items-center justify-center">
+      <span
+        aria-hidden="true"
+        className="absolute h-6 w-6 rounded-full bg-accent opacity-40 blur-[10px] transition-opacity duration-300 group-hover:opacity-70"
+      />
+      <Image
+        src="/logo.png"
+        alt=""
+        aria-hidden="true"
+        width={56}
+        height={56}
+        priority
+        className="relative h-7 w-7"
+      />
     </span>
   );
 }

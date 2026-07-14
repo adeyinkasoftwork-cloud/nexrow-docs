@@ -65,7 +65,6 @@ export const site = {
   bountyTag: "Built for the Sumiro Studio bounty",
   thesisLine:
     "Escrow that becomes a network: hold the client's USDC before the work starts, release it the moment they approve.",
-  sumiroUrl: "https://sumiro.studio",
 };
 
 export const groupOrder: SectionGroup[] = [

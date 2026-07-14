@@ -46,6 +46,15 @@ const config: Config = {
       },
       borderRadius: {
         xl: "0.875rem",
+        "2xl": "1.125rem",
+      },
+      // Depth is themed, so the shadows resolve through CSS variables and change
+      // character between light (ambient occlusion) and dark (lit top edge).
+      boxShadow: {
+        ambient: "var(--shadow-ambient)",
+        lift: "var(--shadow-lift)",
+        featured: "var(--shadow-featured)",
+        "inset-well": "var(--shadow-inset)",
       },
       keyframes: {
         "fade-up": {
@@ -54,7 +63,11 @@ const config: Config = {
         },
       },
       animation: {
-        "fade-up": "fade-up 0.35s ease-out both",
+        "fade-up": "fade-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both",
+      },
+      transitionTimingFunction: {
+        // The single easing curve used for every considered movement on the site.
+        out: "cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },

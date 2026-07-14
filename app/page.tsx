@@ -29,7 +29,15 @@ export default function Page() {
           <Hero />
 
           {sections.map((section, i) => (
-            <Section key={section.id} section={section} index={i} />
+            <Section
+              key={section.id}
+              section={section}
+              index={i}
+              // Drives the long breath before a new chapter. Derived from the
+              // existing group order, so the information architecture is
+              // untouched: only the spacing knows about it.
+              startsGroup={i > 0 && sections[i - 1].group !== section.group}
+            />
           ))}
 
           <Footer />

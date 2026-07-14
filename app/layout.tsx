@@ -18,9 +18,15 @@ export const viewport: Viewport = {
 /**
  * Runs before paint, so the correct theme class is on <html> from the first
  * frame. Without this, a dark-mode visitor sees a white flash on every load.
+ *
+ * It also stamps `js`, which is what gates the scroll-reveal's hidden start
+ * state. Setting it here rather than from React means the reveal never flashes
+ * its content before hiding it, and a visitor without JavaScript simply gets
+ * the page with no animation instead of a page of invisible sections.
  */
 const noFlashScript = `
 (function() {
+  document.documentElement.classList.add('js');
   try {
     var stored = localStorage.getItem('nexrow-theme');
     var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
