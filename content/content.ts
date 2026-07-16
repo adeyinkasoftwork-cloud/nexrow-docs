@@ -102,6 +102,12 @@ export const sections: Section[] = [
         title: "The key insight",
         body: "Escrow is not a feature of a marketplace. It is the smallest unit of trust in cross-border work, and it is shareable. A marketplace has to acquire both sides. A link brings the second side with it.",
       },
+      {
+        kind: "callout",
+        variant: "info",
+        title: "Status, as of July 2026: this is built, not just proposed",
+        body: "The escrow program is deployed and running on Solana devnet (program DJ7iTN4V1Du3N6akVUvQdyn6QVb9B7jgWPEkeuh89kX2), and the app signs real create, fund, release, and cancel transactions against it. The 36-test suite includes five security guards that were mutation-verified: each guard was deleted, the program rebuilt, and the matching test confirmed to fail, then the guard was restored byte-identical. What is not yet true is stated plainly throughout: devnet only (not mainnet), unaudited, and an upgrade authority still held by a single developer key. The rest of this page documents what exists, and marks what is still ahead.",
+      },
     ],
   },
 
@@ -138,7 +144,7 @@ export const sections: Section[] = [
           },
           {
             q: "What would the first version look like?",
-            a: "One page. Freelancer creates an escrow (amount, description, wallet), gets a link, client funds it, funds lock in a program-owned escrow account, freelancer delivers off-platform, client clicks Release, and if the client never acts funds auto-release after a timeout.",
+            a: "It now exists and runs on Solana devnet. A freelancer creates an escrow (amount, description, payout wallet, timeout) and gets a shareable link, the client opens it and funds a program-owned vault, the freelancer delivers off-platform, the client clicks Release, and if the client never acts the funds auto-release after the timeout. Create, fund, release, and cancel all sign real on-chain transactions. It is devnet only and unaudited so far.",
           },
           {
             q: "How would it make money?",
@@ -307,7 +313,7 @@ export const sections: Section[] = [
         heading: "Non-goals (v1)",
         kind: "bullets",
         items: [
-          "Dispute arbitration",
+          "Decentralized or staked arbitration (a basic single-arbiter dispute path did ship, see below)",
           "Fiat on/off ramp",
           "Milestone splitting",
           "Teams",
@@ -334,12 +340,12 @@ export const sections: Section[] = [
             term: "FR1",
             detail: "Create escrow: amount, title, description, wallet, timeout.",
           },
-          { term: "FR2", detail: "Generate a shareable link plus a Blink." },
-          { term: "FR3", detail: "Fund via connected wallet or Solana Pay QR." },
+          { term: "FR2", detail: "Generate a shareable link, copyable and with a scannable QR of that link. (A native Solana Pay request and a Blink are roadmap, not shipped.)" },
+          { term: "FR3", detail: "Fund via connected wallet, signing a real on-chain transaction." },
           {
             term: "FR4",
             detail:
-              "On-chain escrow account with the state machine Created → Funded → Released / Refunded / Auto-released.",
+              "On-chain escrow account with the state machine Created → Funded → Released / Refunded / AutoReleased, plus, when a party opens a dispute, Funded → Disputed → ResolvedRelease / ResolvedRefund / ResolvedSplit.",
           },
           { term: "FR5", detail: "Release, and cancel-before-funding." },
           { term: "FR6", detail: "Timeout auto-release." },
@@ -354,8 +360,8 @@ export const sections: Section[] = [
           "Sub-3s perceived flow",
           "Mobile-first",
           "No account required to fund",
-          "Wallet-only auth",
-          "Audited program",
+          "Wallet sign-in via a nonce and signature (email/password auth also shipped)",
+          "Audited before mainnet (the program is currently unaudited and devnet only)",
           "Graceful RPC failure",
         ],
       },
@@ -363,8 +369,8 @@ export const sections: Section[] = [
         heading: "Acceptance criteria",
         kind: "callout",
         variant: "key",
-        title: "One sentence, testable",
-        body: "A freelancer with no prior account can create and share a funded escrow, and a client with a wallet can fund and release it, and the freelancer receives the funds minus the fee, on devnet, in under 5 minutes.",
+        title: "One sentence, testable, and now passing on devnet",
+        body: "A freelancer with no prior account can create and share a funded escrow, and a client with a wallet can fund and release it, and the freelancer receives the funds minus the fee, on devnet, in under 5 minutes. This runs end to end against the deployed program today. Mainnet, an audit, and low caps are the remaining gate before real money.",
       },
       {
         heading: "Risks",
@@ -373,16 +379,16 @@ export const sections: Section[] = [
           {
             term: "Dispute abuse",
             detail:
-              "v1 is trust-first plus timeout. Arbitration is explicitly v2, not a pretended v1 feature.",
+              "The 80% case is handled by approve-or-timeout. A basic dispute path also shipped: either party can freeze a funded escrow, and an arbiter resolves it (release, refund, or split). The arbiter is a single hot key today, which is itself a risk, see the Appendix.",
           },
           {
             term: "Regulation",
             detail:
-              "Non-custodial by design. Get counsel before touching fiat.",
+              "Non-custodial by design: funds move wallet to program vault to wallet, and there is no pooled Nexrow balance. Get counsel before touching fiat.",
           },
           {
             term: "Contract risk",
-            detail: "Audit before mainnet, and launch with low caps.",
+            detail: "Deployed to devnet with a 36-test suite and five mutation-verified guards, but unaudited. External audit and low caps before mainnet.",
           },
         ],
       },
@@ -394,35 +400,40 @@ export const sections: Section[] = [
     id: "mvp-scope",
     navLabel: "MVP Scope",
     title: "MVP Scope",
-    summary: "What ships in 14 days, and what deliberately does not.",
+    summary: "What shipped, and what deliberately did not.",
     group: "Product",
     blocks: [
       {
-        heading: "In scope",
+        heading: "Shipped (live on devnet)",
         kind: "bullets",
         items: [
-          "Create escrow",
-          "Shareable link plus Blink",
-          "Fund via wallet or Solana Pay",
-          "On-chain state machine",
-          "Release by client",
-          "Cancel before fund",
-          "Timeout auto-release",
-          "Per-wallet status dashboard",
-          "Fee on release",
+          "Create escrow, signing initialize_escrow on-chain",
+          "Shareable link with a copyable URL and a QR of that link",
+          "Fund via connected wallet, signing a real on-chain transaction",
+          "On-chain state machine, including the dispute and resolution states",
+          "Release by the client",
+          "Cancel before funding",
+          "Timeout auto-release, cranked by a scheduled keeper",
+          "Per-wallet dashboard, read back from the chain",
+          "Fee on release, routed to the treasury from the Config PDA",
+          "Supabase auth, profiles, settings, notifications, and dispute records, with RLS",
+          "Wallet sign-in via a nonce and signature",
+          "Dispute open plus a single-arbiter resolution console (release, refund, split)",
+          "Non-custodial wallet view (no pooled Nexrow balance, no deposit or withdraw)",
         ],
       },
       {
-        heading: "Out of scope",
+        heading: "Out of scope (still)",
         kind: "bullets",
         items: [
-          "Arbitration",
+          "Decentralized or staked arbitration",
           "Fiat ramps",
           "Milestones",
           "Teams",
           "Native mobile app",
           "Reputation",
-          "Rich notifications",
+          "Solana Pay funding and Blinks distribution",
+          "Email and Telegram notifications (in-app notifications did ship)",
         ],
       },
       {
@@ -430,31 +441,31 @@ export const sections: Section[] = [
         kind: "callout",
         variant: "key",
         title: "Done means live, not demoable",
-        body: "On mainnet with low caps: a new freelancer creates and shares a funded escrow, a client funds and releases it, and the freelancer receives the funds minus the fee. One session, audited program, no manual intervention.",
+        body: "The full loop is live on devnet: a new freelancer creates and shares a funded escrow, a client funds and releases it, and the freelancer receives the funds minus the fee, in one session with no manual intervention. The remaining gate to calling it done for real money is mainnet, an external audit, low caps, and moving the upgrade and arbiter authorities off single keys.",
       },
       {
-        heading: "14-day build map",
+        heading: "What actually got built",
         kind: "stepper",
         steps: [
           {
-            label: "Days 1-3",
+            label: "Step 1",
             title: "Positioning, naming, scope freeze",
-            body: "Lock the one-liner, the name, and the boundary of v1. Everything after this is execution, not debate.",
+            body: "Locked the one-liner, the name, and the boundary of v1.",
           },
           {
-            label: "Days 4-8",
-            title: "Branding, landing, escrow UI, integrations",
-            body: "Brand system and landing page, the escrow creation and funding UI, wallet adapter, and Solana Pay integration.",
+            label: "Step 2",
+            title: "Branding, landing, escrow UI",
+            body: "Brand system and landing page, the escrow creation and funding UI, and the wallet adapter.",
           },
           {
-            label: "Days 9-11",
-            title: "Anchor program, devnet, polish",
-            body: "Ship the on-chain program, run the full loop on devnet, and polish the client-side funding experience.",
+            label: "Step 3",
+            title: "Anchor program, tested, deployed to devnet",
+            body: "Wrote the on-chain program (escrow plus a Config PDA for treasury and arbiter, disputes, and arbiter resolution), covered it with a 36-test LiteSVM suite, mutation-verified five of the security guards, and deployed to devnet.",
           },
           {
-            label: "Days 12-14",
-            title: "Audit pass, pitch, launch pack",
-            body: "Audit pass on low caps, then the pitch, the launch pack, and the thread.",
+            label: "Step 4",
+            title: "Wired the frontend, Supabase, keeper, arbiter console",
+            body: "Wired create, fund, release, and cancel to the deployed program, stood up Supabase (auth, profiles, settings, notifications, dispute records, RLS) with wallet sign-in, added the timeout keeper, and built the arbiter console. Audit and mainnet are the remaining post-sprint work.",
           },
         ],
       },
@@ -466,15 +477,16 @@ export const sections: Section[] = [
     id: "architecture",
     navLabel: "Product Architecture",
     title: "Product Architecture",
-    summary: "The program is the source of truth. Money never touches our servers.",
+    summary: "What was built. The program is the source of truth for funds, and no pooled balance ever touches our servers.",
     group: "Product",
     blocks: [
       {
         heading: "Overview",
         kind: "prose",
         paragraphs: [
-          "A thin web client, a Solana program (Anchor) that is the source of truth for funds, USDC as the value layer, and a light indexer/backend used only for read convenience and notifications.",
-          "Money never touches our servers.",
+          "A Next.js web client, a Solana program (Anchor, deployed to devnet) that is the source of truth for funds, USDC as the value layer, and Supabase as an off-chain record and index layer for reads, accounts, and notifications.",
+          "One thing was added that was not in the original plan: a Config PDA, a platform singleton that holds the treasury and arbiter authorities outside any escrow. It exists so that the escrow creator (the freelancer) can never name themselves the arbiter and self-resolve. The admin can rotate treasury or arbiter through update_config without redeploying the program.",
+          "No pooled Nexrow balance ever exists: funds move wallet to program vault to wallet directly. The one honest caveat is the program's upgrade authority, covered under Trust and security below.",
         ],
       },
       {
@@ -483,98 +495,138 @@ export const sections: Section[] = [
         items: [
           {
             title: "Frontend",
-            body: "Next.js and React, wallet adapter for Phantom/Backpack/Solflare, Solana Pay QR, and a Blinks endpoint.",
+            body: "Next.js and React, with a wallet adapter for Phantom, Backpack, and Solflare. The share surface is a link (/e/[id]) with a copy button and a QR of that link. A native Solana Pay request and a Blink are on the roadmap, not shipped.",
           },
           {
             title: "On-chain program",
-            body: "Anchor/Rust. A PDA per escrow holds USDC in a program-controlled token account. Instructions: initialize_escrow, fund_escrow, release, cancel, timeout_release. The fee is routed to the treasury on release.",
+            body: "Anchor and Rust, deployed to devnet at DJ7iTN4V1Du3N6akVUvQdyn6QVb9B7jgWPEkeuh89kX2. A PDA per escrow owns a per-escrow vault token account. Instructions: initialize_config, update_config, initialize_escrow, fund_escrow, release, cancel, timeout_release, open_dispute, resolve_release, resolve_refund, resolve_split. The fee is routed to the treasury on release.",
           },
           {
-            title: "Backend / indexer",
-            body: "Minimal, non-custodial, and non-authoritative. It listens to events purely for dashboard reads and notifications. If it goes down, funds are unaffected.",
+            title: "Config PDA",
+            body: "A platform singleton (seed \"config\"), created once, holding admin, treasury, and arbiter. Kept off the escrow so neither party can appoint the arbiter. The admin can rotate keys via update_config with no redeploy. This was not in the original design.",
           },
           {
-            title: "Notifications",
-            body: "Email and Telegram. On the roadmap, not in v1.",
+            title: "Supabase",
+            body: "The off-chain record and index layer: auth, profiles, settings, notifications, and dispute records (evidence and messages), all under row-level security. Non-authoritative for funds. If it goes down, the money is unaffected and reads self-heal from the chain.",
+          },
+          {
+            title: "Keeper (auto-release crank)",
+            body: "A scheduled server-side job that signs timeout_release for expired escrows with a dedicated keeper key. On the current Vercel Hobby cron it runs about once a day, so auto-release is not instant at the moment the window closes. Anyone can also trigger timeout_release directly against the program.",
+          },
+          {
+            title: "Arbiter console",
+            body: "A dispute-resolution surface gated by a logged-in session, a server-only admin allowlist, and a per-resolution operator-wallet step-up signature. The on-chain resolve_* instructions still require the arbiter key recorded in the Config PDA.",
           },
         ],
       },
       {
         heading: "State machine",
         kind: "code",
-        caption: "Timeout is enforced by the on-chain clock and is callable by anyone after expiry.",
+        caption: "The actual on-chain states. Timeout is enforced by the on-chain clock and is callable by anyone after expiry. Disputes freeze the escrow, and only the arbiter can resolve them.",
         // Pure ASCII on purpose: box-drawing glyphs are not in the font's latin
         // subset, so they fall back to another face and the diagram misaligns.
         code: `  +---------+   fund_escrow    +--------+      release     +----------+
   | Created | ---------------> | Funded | ---------------> | Released |
   +---------+  (client funds)  +--------+ (client approves)+----------+
-       |                            |
-       | cancel                     | timeout_release
-       | (creator, before fund)     | (anyone, after timeout_at)
-       v                            v
-  +----------+               +--------------+
-  | Refunded |               | AutoReleased |
-  +----------+               +--------------+
+       |                         |    |
+       | cancel                  |    | timeout_release
+       | (creator, before fund)  |    | (anyone, after timeout_at)
+       v                         |    v
+  +----------+                   |  +--------------+
+  | Refunded |                   |  | AutoReleased |
+  +----------+                   |  +--------------+
+                                 | open_dispute
+                                 | (either party)
+                                 v
+                            +----------+
+                            | Disputed |
+                            +----------+
+                                 | resolve_release / resolve_refund /
+                                 | resolve_split   (arbiter only)
+                                 v
+             +-----------------+ +----------------+ +---------------+
+             | ResolvedRelease | | ResolvedRefund | | ResolvedSplit |
+             +-----------------+ +----------------+ +---------------+
 
-  initialize_escrow is signed by the freelancer and creates the account
-  in the Created state. The program holds the USDC, never Nexrow.`,
+  initialize_config runs once, setting the treasury and arbiter in a
+  Config PDA the parties do not control. initialize_escrow is signed by
+  the freelancer and creates the account in Created. The program vault
+  holds the USDC, never Nexrow.`,
       },
       {
         heading: "Data model",
         kind: "dataModel",
         fields: [
           {
-            field: "id / PDA",
+            field: "escrow PDA",
             type: "Pubkey",
-            note: "Deterministic program-derived address, one per escrow.",
+            note: "Program-derived from [\"escrow\", creator, seed]. One per escrow.",
           },
           {
             field: "creator",
             type: "Pubkey",
-            note: "Freelancer wallet. Set at initialize_escrow.",
+            note: "Freelancer who created the link. Authority for cancel only, never a payout.",
+          },
+          {
+            field: "freelancer_wallet",
+            type: "Pubkey",
+            note: "Where the payout goes. May differ from creator.",
           },
           {
             field: "payer",
             type: "Pubkey",
-            note: "Client wallet. Set on fund, not known before.",
+            note: "Client wallet. Pubkey::default() until funded, then set to whoever funds.",
           },
-          { field: "amount", type: "u64", note: "Escrowed amount, in base units." },
-          { field: "mint", type: "Pubkey", note: "USDC." },
-          {
-            field: "status",
-            type: "enum",
-            note: "Created, Funded, Released, Refunded, AutoReleased.",
-          },
-          { field: "created_at", type: "i64", note: "Unix timestamp, on-chain clock." },
-          { field: "funded_at", type: "i64", note: "Unix timestamp, set on fund." },
-          {
-            field: "timeout_at",
-            type: "i64",
-            note: "After this, anyone can trigger timeout_release.",
-          },
+          { field: "mint", type: "Pubkey", note: "The SPL mint held in escrow (USDC)." },
+          { field: "vault", type: "Pubkey", note: "This escrow's token account, a PDA whose authority is the escrow." },
+          { field: "amount", type: "u64", note: "Escrowed amount, in the mint's base units." },
           {
             field: "fee_bps",
             type: "u16",
-            note: "Fee in basis points, deducted on release.",
+            note: "Fee in basis points, snapshotted at creation (default 100, 1%). Deducted on release.",
+          },
+          {
+            field: "timeout_at",
+            type: "i64",
+            note: "Unix timestamp. After this, anyone can trigger timeout_release.",
+          },
+          { field: "seed", type: "u64", note: "Caller nonce, so one creator can hold many live escrows." },
+          {
+            field: "status",
+            type: "enum",
+            note: "Created, Funded, Released, Refunded, AutoReleased, Disputed, ResolvedRelease, ResolvedRefund, ResolvedSplit.",
           },
         ],
+      },
+      {
+        kind: "callout",
+        variant: "info",
+        title: "The Config account",
+        body: "Separate from the escrow, a single Config PDA (seed \"config\") holds admin, treasury, and arbiter. It is created once by initialize_config and updated only by the admin via update_config. Keeping treasury and arbiter here, out of the escrow struct, is what stops a freelancer from naming themselves the arbiter. This account did not exist in the original plan.",
       },
       {
         heading: "Trust & security",
         kind: "bullets",
         items: [
-          "Funds are custodied by the program, not by us.",
-          "Audited before mainnet.",
-          "Low caps at launch.",
-          "Upgrade authority timelocked or renounced, per the audit.",
-          "Timeout is triggerable by anyone, so the freelancer never depends on us being online.",
+          "Funds sit in a per-escrow program vault, not in any Nexrow-controlled wallet. There is no pooled balance.",
+          "Between the two counterparties, the money is neutral: the creator can only cancel or receive a payout, never trigger one to themselves, and the client is the only one who can release.",
+          "Timeout is triggerable by anyone after expiry, so the freelancer never depends on Nexrow being online. In practice the keeper does it, roughly once a day on the current host.",
+          "A dispute freezes the escrow. Only the arbiter recorded in the Config PDA can resolve it, and neither party can appoint that arbiter.",
+          "Unaudited, and devnet only. An external audit and low caps come before mainnet.",
         ],
+      },
+      {
+        heading: "The strongest evidence: mutation-verified guards",
+        kind: "callout",
+        variant: "key",
+        title: "We did not just write tests, we proved they bite",
+        body: "The program ships with a 36-test LiteSVM suite, one test per non-negotiable invariant. For five of the security guards we went further and mutation-verified them: each guard was deleted from the source, the program rebuilt, and the corresponding test confirmed to fail, then the guard was restored byte-identical. That is direct evidence the guard is load-bearing and the test would catch its removal, which is a stronger claim than a passing test on its own. It is still not a substitute for an external audit.",
       },
       {
         kind: "callout",
         variant: "warning",
-        title: "The non-custodial line",
-        body: "If Nexrow disappears overnight, every funded escrow can still be released or timed out by the counterparties directly against the program. That property is the product, and we do not trade it away for convenience.",
+        title: "The honest limit on \"non-custodial\"",
+        body: "Against the currently deployed rules, if Nexrow disappeared every funded escrow could still be released or timed out by the counterparties directly against the program. But the program's upgrade authority is a single developer keypair (A9JyaJtpFKNvf1pD1phs7GPq1mEi2VpCniyFD9kfCiSW). Whoever holds it can deploy different rules and reach every escrow, so any flat \"Nexrow cannot touch your money\" claim is not true as written today. The mitigation is to move the upgrade authority to a multisig before mainnet. Until then, this stays on devnet.",
       },
     ],
   },
@@ -609,7 +661,7 @@ export const sections: Section[] = [
           {
             label: "04",
             title: "Share",
-            body: "Get the link, the QR, and the Blink. Send it to the client in whatever chat they already use.",
+            body: "Get the link and a QR of it. Send it to the client in whatever chat they already use.",
           },
         ],
       },
@@ -624,13 +676,13 @@ export const sections: Section[] = [
           },
           {
             label: "02",
-            title: "Connect or scan",
-            body: "Connect a wallet, or scan the Solana Pay QR from a phone.",
+            title: "Connect",
+            body: "Connect a wallet. (Scanning the QR opens the same link on a phone; native Solana Pay funding is roadmap.)",
           },
           {
             label: "03",
             title: "Approve",
-            body: "Approve fund_escrow. The card flips to Funded, and the freelancer can start with proof of funds.",
+            body: "Approve fund_escrow, a real on-chain transaction. The card flips to Funded, and the freelancer can start with proof of funds.",
           },
         ],
       },
@@ -651,7 +703,28 @@ export const sections: Section[] = [
           {
             label: "03",
             title: "Or the client goes quiet",
-            body: "If the client never returns, then after the timeout anyone can trigger timeout_release and the freelancer is paid.",
+            body: "If the client never returns, then after the timeout the funds release to the freelancer. The keeper does this automatically, though on the current host it runs about once a day, so it is not instant at the moment the window closes. Anyone can also trigger timeout_release directly.",
+          },
+        ],
+      },
+      {
+        heading: "Flow 4: If it goes wrong, a dispute",
+        kind: "stepper",
+        steps: [
+          {
+            label: "01",
+            title: "Freeze",
+            body: "Either party opens a dispute on a funded escrow. That flips it to Disputed, which freezes both release and the timeout crank.",
+          },
+          {
+            label: "02",
+            title: "Review",
+            body: "Evidence and messages are recorded off-chain in Supabase. An arbiter reviews them in the arbiter console.",
+          },
+          {
+            label: "03",
+            title: "Resolve",
+            body: "The arbiter resolves on-chain: release to the freelancer, refund to the client, or a split. Today the arbiter is a single key, and moving it to a Squads multisig is the roadmap fix.",
           },
         ],
       },
@@ -680,37 +753,41 @@ export const sections: Section[] = [
     group: "Plan",
     blocks: [
       {
+        kind: "callout",
+        variant: "key",
+        title: "Already live on devnet, the base the roadmap builds on",
+        body: "Deployed Anchor program, on-chain create, fund, release, cancel, and timeout, dispute plus single-arbiter resolution, the auto-release keeper, Supabase auth, profiles, settings, notifications and dispute records, wallet sign-in, and the non-custodial wallet view. Backed by a 36-test suite with five mutation-verified guards. The roadmap below is what comes after that.",
+      },
+      {
         kind: "roadmap",
         columns: [
           {
             phase: "Now",
-            window: "0-4 weeks, MVP",
+            window: "hardening toward mainnet",
             items: [
-              "Anchor escrow program",
-              "Single-link create, fund, release, timeout",
-              "Wallet connect",
-              "Solana Pay QR",
-              "Status dashboard",
-              "Devnet, then audited mainnet at low caps",
+              "External security audit",
+              "Move the program upgrade authority to a multisig",
+              "Move the arbiter to a Squads multisig",
+              "Faster auto-release crank (the Hobby cron runs ~once a day)",
+              "Mainnet at low caps",
             ],
           },
           {
             phase: "Next",
             window: "1-3 months",
             items: [
-              "Milestone escrows",
+              "Solana Pay funding and Blink distribution on X",
               "Invoicing layer",
+              "Milestone escrows",
+              "Freelancer profiles and reputation v1",
               "Email and Telegram notifications",
-              "Freelancer profile",
-              "Blink distribution on X",
-              "Basic reputation",
             ],
           },
           {
             phase: "Later",
             window: "3-9 months",
             items: [
-              "Dispute and arbitration",
+              "Decentralized or staked arbitration",
               "Team and agency accounts",
               "Recurring retainers",
               "Fiat off-ramp partners",
@@ -801,7 +878,7 @@ export const sections: Section[] = [
         heading: "Primary",
         kind: "prose",
         paragraphs: [
-          "A 0.5-1% fee on successful release, deducted from the released amount. It scales with volume, and the incentive is aligned: we only earn when the freelancer actually gets paid.",
+          "A 0.5-1% fee on successful release, deducted from the released amount. The deployed default is 1% (100 basis points), snapshotted into each escrow at creation and routed to the treasury on release. It scales with volume, and the incentive is aligned: we only earn when the freelancer actually gets paid.",
         ],
       },
       {
@@ -870,7 +947,7 @@ export const sections: Section[] = [
         heading: "Channels",
         kind: "bullets",
         items: [
-          "X threads plus Blinks, so a client can fund straight from the timeline.",
+          "X threads, and (roadmap) Blinks so a client can fund straight from the timeline.",
           "Superteam Discord/Telegram and the regional chapters: Nigeria, India, SEA, Vietnam, Turkey.",
           "Founder-led public build logs, and “I got paid in 3 seconds” clips.",
           "Payment-horror-story content, which the audience writes for us.",
@@ -951,7 +1028,7 @@ export const sections: Section[] = [
         kind: "callout",
         variant: "info",
         title: "The channel no fiat competitor has",
-        body: "Blinks let the funding action live inside a tweet. Escrow.com cannot put a fundable escrow in a timeline, and Upwork does not want to.",
+        body: "On the roadmap, Blinks let the funding action live inside a tweet. Escrow.com cannot put a fundable escrow in a timeline, and Upwork does not want to. Today the share surface is a link and a QR, and the Blink is the next step.",
       },
       {
         heading: "Metrics",
@@ -1002,7 +1079,7 @@ export const sections: Section[] = [
             label: "Marketplace lock-in",
             cells: ["No", "Yes", "No", "No", "No"],
           },
-          { label: "Handles disputes", cells: ["v2", "Yes", "Yes", "No", "Manual"] },
+          { label: "Handles disputes", cells: ["Basic (single arbiter)", "Yes", "Yes", "No", "Manual"] },
           {
             label: "Built for solo freelancer",
             cells: ["Yes", "Yes", "No", "Partly", "No"],
@@ -1019,7 +1096,7 @@ export const sections: Section[] = [
         kind: "callout",
         variant: "key",
         title: "Our whitespace",
-        body: "Incumbents win on dispute handling and trust brand, but lose on cost, speed, lock-in, and simplicity. Crypto tools win on cost, but are not usable escrow for a solo freelancer. Nexrow's whitespace is escrow-grade guarantee with link-level simplicity at near-zero cost, with disputes deliberately deferred and roadmapped.",
+        body: "Incumbents win on dispute handling and trust brand, but lose on cost, speed, lock-in, and simplicity. Crypto tools win on cost, but are not usable escrow for a solo freelancer. Nexrow's whitespace is escrow-grade guarantee with link-level simplicity at near-zero cost, with a basic single-arbiter dispute path shipped and decentralized arbitration roadmapped.",
       },
     ],
   },
@@ -1053,7 +1130,7 @@ export const sections: Section[] = [
           {
             n: 4,
             title: "Demo",
-            body: "15 seconds: create, fund, release. Real USDC.",
+            body: "15 seconds: create, fund, release. Real USDC on devnet, against the deployed program.",
           },
           {
             n: 5,
@@ -1073,7 +1150,7 @@ export const sections: Section[] = [
           {
             n: 8,
             title: "Product",
-            body: "MVP plus roadmap: link → invoicing → reputation → network.",
+            body: "Built and live on devnet: on-chain escrow, disputes, keeper, Supabase, wallet sign-in. 36 tests, five security guards mutation-verified. Roadmap: link → invoicing → reputation → network.",
           },
           {
             n: 9,
@@ -1103,7 +1180,7 @@ export const sections: Section[] = [
           {
             n: 14,
             title: "Ask",
-            body: "Build it in the sprint, and launch it with the Superteam community.",
+            body: "It is already built and running on devnet. Back the audit, the move to multisig authorities, and the mainnet launch with the Superteam community.",
           },
         ],
       },
@@ -1129,28 +1206,44 @@ export const sections: Section[] = [
           { term: "Release", detail: "Pay the freelancer." },
           {
             term: "Timeout",
-            detail: "Auto-pay the freelancer if the client goes quiet.",
+            detail: "Auto-pay the freelancer if the client goes quiet. Handled by the keeper, and triggerable by anyone.",
+          },
+          {
+            term: "Dispute",
+            detail: "Either party freezes the escrow so no one can move the money until an arbiter decides.",
+          },
+          {
+            term: "Arbiter",
+            detail: "The neutral party who resolves a dispute (release, refund, or split). A single key today, a multisig later.",
           },
         ],
       },
       {
-        heading: "Top risks, ranked",
+        heading: "Top risks, ranked against what is actually exposed now",
         kind: "definitions",
         items: [
           {
-            term: "1. Disputes and trust at scale",
-            detail: "Mitigation: the arbitration roadmap. This is the real one.",
+            term: "1. Upgrade-authority key compromise",
+            detail: "The program's upgrade authority is a single developer keypair. Whoever holds it can deploy different rules and reach every escrow. Mitigation: move it to a multisig before mainnet, and stay on devnet until then. This is the real one now.",
           },
           {
-            term: "2. Money-transmission regulation",
-            detail: "Mitigation: non-custodial design, plus counsel before fiat.",
+            term: "2. Unaudited contract",
+            detail: "A 36-test suite and five mutation-verified guards raise confidence, but they are not an audit. Mitigation: external audit and low caps before mainnet.",
           },
           {
-            term: "3. Smart-contract exploit",
-            detail: "Mitigation: audit, plus low caps at launch.",
+            term: "3. Single-arbiter compromise or capture",
+            detail: "One hot key resolves every dispute. Mitigation: move the arbiter to a Squads multisig.",
           },
           {
-            term: "4. Cold-start beyond Superteam",
+            term: "4. Money-transmission regulation",
+            detail: "Mitigation: non-custodial design (no pooled balance, no deposit or withdraw), plus counsel before touching fiat.",
+          },
+          {
+            term: "5. Disputes and trust at scale",
+            detail: "A basic single-arbiter path shipped, but it does not scale and is centralized. Mitigation: the decentralized-arbitration roadmap.",
+          },
+          {
+            term: "6. Cold-start beyond Superteam",
             detail: "Mitigation: single-link virality, plus the chapter network.",
           },
         ],
@@ -1159,8 +1252,8 @@ export const sections: Section[] = [
         heading: "One honest line for judges",
         kind: "callout",
         variant: "warning",
-        title: "We are not pretending to solve disputes",
-        body: "The hard part is disputes, and we deliberately do not pretend to solve it in v1. We solve the 80% case (an honest client, with ghosting risk) using approve-or-timeout, and we name arbitration as the v2 that turns a feature into a company.",
+        title: "What is real, and what we are not claiming",
+        body: "What is real: the program is deployed to devnet, the app signs real create, fund, release, and cancel transactions, disputes and single-arbiter resolution work, and five of the security guards are mutation-verified, not just tested. What we are not claiming: it is not on mainnet, it is not audited, the upgrade authority and the arbiter are still single keys, and the dispute path is basic. We solve the 80% case (an honest client, with ghosting risk) with approve-or-timeout, and we name the audit, the multisig authorities, and decentralized arbitration as the work that turns a working prototype into something that can hold real money.",
       },
       {
         heading: "Naming rationale",
