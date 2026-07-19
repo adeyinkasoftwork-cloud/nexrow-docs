@@ -1,6 +1,6 @@
 # Nexrow, documentation site
 
-A single-page documentation site for **Nexrow** (single-link USDC escrow for cross-border freelancers), built for the Sumiro Studio bounty.
+A single-page documentation site for **Nexrow** (single-link USDC escrow for cross-border freelancers).
 
 Next.js (App Router) + TypeScript + Tailwind. Static, no backend, no database.
 
@@ -23,7 +23,7 @@ npm run build && npm run start   # production build
 
 It exports:
 
-- `site` — product name, tagline, bounty tag, footer thesis line.
+- `site` — product name, tagline, footer thesis line.
 - `sections` — the 17 documentation sections, in sidebar order.
 - `groupOrder` — the four sidebar category labels (Thesis, Product, Plan, Analysis & Pitch).
 
@@ -58,7 +58,7 @@ app/
   icon.svg        Favicon
 components/
   Providers.tsx   Active-heading IntersectionObserver + mobile drawer state
-  Header.tsx      Wordmark, bounty tag, theme toggle, hamburger
+  Header.tsx      Wordmark, theme toggle, hamburger
   Sidebar.tsx     Grouped nav, gradient active indicator
   OnThisPage.tsx  Right-hand outline, hidden below lg
   Section.tsx     Section wrapper, maps blocks to components

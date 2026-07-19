@@ -62,7 +62,6 @@ export type Section = {
 export const site = {
   name: "Nexrow",
   tagline: "escrow, in one link.",
-  bountyTag: "Built for the Sumiro Studio bounty",
   thesisLine:
     "Escrow that becomes a network: hold the client's USDC before the work starts, release it the moment they approve.",
 };

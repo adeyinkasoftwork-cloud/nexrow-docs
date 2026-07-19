@@ -37,18 +37,6 @@ export default function Header() {
         </a>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          {/* The dot was a 6px scrap of the brand gradient. At that size a
-              gradient is indistinguishable from a muddy solid, so it is now an
-              aperture: the site's motif, in the solid accent, with a halo. */}
-          <span className="hidden items-center gap-2 rounded-full border border-line bg-surface-raised/70 py-1.5 pl-2.5 pr-3.5 text-[12px] font-medium text-ink-muted backdrop-blur-md md:inline-flex">
-            <span
-              aria-hidden="true"
-              className="flex h-4 w-4 items-center justify-center rounded-full bg-accent/12"
-            >
-              <span className="nx-aperture h-[6px] w-[6px] text-accent" />
-            </span>
-            {site.bountyTag}
-          </span>
           <ThemeToggle />
         </div>
       </div>
